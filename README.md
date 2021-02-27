@@ -27,7 +27,8 @@ This repository contains ready first, second, fifth and eighth laboratory works,
 <b>Main Task:</b> Delete from the project all files with extensions `.tmp`, `.jar`, `.class` except those starting with the letter "a".
 
 <details>
-  <summary>Implementation of `build.xml`</summary>
+<summary>Implementation of <cite>build.xml</cite></summary>
+  
 ```xml
 <project name="SE-Labs" default="delete-files" basedir=".">
 
