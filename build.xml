@@ -1,0 +1,153 @@
+<project name="SE-Labs" default="delete-files" basedir=".">
+
+    <!-- ================== Application Properties =================== -->
+    <property name="app.name" value="SE-Labs" />
+    <property name="app.version" value="1.0" />
+    <property name="app.title" value="Software Engineering Labs" />
+    <property name="app.author" value="Jack Shendrikov" />
+    <property name="app.company" value="jackshenua" />
+
+    <property name="sourceDir" value="src" />
+    <property name="outputDir" value="out/eclipse-classes" />
+    <property name="buildDir" value="out/build" />
+    <property name="resourceDir" value="src/res" />
+    <property name="libDir" value="lib" />
+
+    <!-- ================== JAR Properties =================== -->
+    <property name="jar.mainClass" value="ua.jackshen.TestMain" />
+    <property name="jar.name" value="${app.name}.jar" />
+    <property name="jar.keyStore" value="${basedir}/out/tempKey.store" />
+    <property name="jar.keyPass" value="telpat" />
+    <property name="jar.keyAlias" value="tempAlias" />
+
+    <!--  ==================== Compilation Control Options ==================== -->
+    <property name="compile.debug"       value="true"/>
+    <property name="compile.deprecation" value="false"/>
+    <property name="compile.optimize"    value="true"/>
+    <path id="compile.classpath">
+        <fileset dir="${libDir}">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+
+    <!-- ==================== Clean Target ================================== -->
+    <target name="clean"
+            description="Clean build dirs">
+        <delete dir="${buildDir}" />
+    </target>
+
+    <!-- ==================== Prepare Target ================================== -->
+    <target name="prepare"
+            depends="clean"
+            description="Prepare build dirs">
+        <mkdir  dir="${buildDir}"/>
+        <mkdir  dir="${buildDir}/output"/>
+        <mkdir  dir="${buildDir}/web-apps"/>
+    </target>
+
+    <!-- ==================== Compile Target ================================== -->
+    <target name="compile"
+            depends="prepare"
+            description="Compile Java sources">
+
+        <javac srcdir="${sourceDir}"
+               destdir="${buildDir}/output"
+               debug="${compile.debug}"
+               deprecation="${compile.deprecation}"
+               optimize="${compile.optimize}"
+               target="1.8"
+               source="1.8"
+               includeantruntime="false">
+            <classpath refid="compile.classpath"/>
+        </javac>
+
+        <copy  todir="${buildDir}/output">
+            <fileset dir="${sourceDir}" excludes="**/*.java"/>
+        </copy>
+    </target>
+
+    <!-- ==================== Create JAR archive Target ================================== -->
+    <target name="createJAR"
+            depends="compile"
+            description="Create JAR archive" >
+        <jar destfile="${buildDir}/${jar.name}" basedir="${outputDir}">
+            <manifest>
+                <attribute name="Created-By" value="${app.author} - (${app.company})"/>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Main-Class" value="${jar.mainClass}"/>
+                <section name="${app.name}">
+                    <attribute name="Specification-Title" value="${app.title}"/>
+                    <attribute name="Specification-Version" value="${app.version}"/>
+                    <attribute name="Specification-Vendor" value="${app.company}"/>
+                    <attribute name="Implementation-Title" value="${app.name}"/>
+                    <attribute name="Implementation-Version" value="${app.version}"/>
+                    <attribute name="Implementation-Vendor" value="${app.company}"/>
+                </section>
+            </manifest>
+        </jar>
+    </target>
+
+    <!-- ==================== Generate Key for JAR signing Target ================================== -->
+    <target name="generateKey"
+            description="Generates Key for JAR signing">
+        <delete failonerror="false" file="${jar.keyStore}"/>
+        <genkey keystore="${jar.keyStore}" alias="${jar.keyAlias}" storepass="${jar.keyPass}" validity="720" keyalg="RSA">
+            <dname>
+                <param name="CN" value="${app.company}"/>
+                <param name="OU" value="${app.title}"/>
+                <param name="O"  value="${app.company}"/>
+
+            </dname>
+        </genkey>
+    </target>
+
+
+
+    <!-- ==================== FixStyle Target ================================== -->
+    <target name="fixstyle"
+            description="Fix Style in source code" >
+        <fixcrlf srcdir="${basedir}"
+                 tab="remove"
+                 tablength="2"
+                 includesfile="fixstyle.list"
+        />
+    </target>
+
+    <!-- ==================== JAR Singing Target ================================== -->
+    <target name="signJAR"
+            depends="createJAR,generateKey"
+            description="Signing JAR archive">
+        <exec dir="${buildDir}" executable="jarsigner">
+            <arg line="-keystore ${jar.keyStore} -storepass ${jar.keyPass} ${jar.name} ${jar.keyAlias}"/>
+        </exec>
+        <delete file="${buildDir}/myKeystore" />
+    </target>
+
+
+    <!-- ==================== Make zip Target ================================== -->
+    <target name="make-zip-project"
+            description="Zip all project tree from basedir">
+        <tstamp />
+        <zip destfile="../${app.name}-${DSTAMP}-${TSTAMP}.zip"
+             basedir="${basedir}"
+             excludes="out/**"/>
+    </target>
+
+    <!-- ==================== Delete files Target ================================== -->
+    <target name="delete-files" depends="signJAR" description="Delete jar, tmp, class file except first a in name">
+        <echo>Files successfully deleted!</echo>
+        <delete>
+            <fileset dir="." includes="**/*.jar" excludes="**/a*.jar" />
+            <fileset dir="." includes="**/*.tmp" excludes="**/a*.tmp" />
+            <fileset dir="." includes="**/*.class" excludes="**/a*.class" />
+        </delete>
+    </target>
+
+    <!-- ==================== generate doc by javadoc Target ================================== -->
+    <target name="generate-javadoc" depends="delete-files"
+            description="Zip all project tree from basedir">
+        <javadoc sourcepath="${sourceDir}" destdir="doc" author="yes" version="yes" access="private">
+        </javadoc>
+    </target>
+
+</project>
